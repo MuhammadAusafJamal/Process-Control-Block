@@ -1,4 +1,4 @@
-import  { useState } from "react";
+import { useState } from "react";
 import { Box, TextField, Button, Typography, Grid, List, ListItem, ListItemText, Paper } from "@mui/material";
 import Swal from "sweetalert2";
 
@@ -7,13 +7,15 @@ const App = () => {
   const [quantumSize, setQuantumSize] = useState("");
   const [processes, setProcesses] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [quantumSizeValidate, setQuantumSizeValidate] = useState(false)
+  const [processNumberValidate, setProessNumberValidate] = useState(false)
 
   const handleAddProcess = () => {
-    if (processes.length >= 5) {
+    if (processes.length >= numProcesses) {
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Maximum of 5 processes allowed!",
+        text: `Can't add more than ${numProcesses} processes`,
       });
       return;
     }
@@ -138,7 +140,7 @@ const App = () => {
       });
       return;
     }
-  
+
     const quantum = parseInt(quantumSize);
     if (quantum < 1 || quantum > 3) {
       Swal.fire({
@@ -148,22 +150,22 @@ const App = () => {
       });
       return;
     }
-  
+
     // Sort the processes by arrival time before simulation starts
     let queue = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
     let currentTime = 0;
     let simulationLogs = [];
     let completedProcesses = 0;
-  
+
     while (completedProcesses < processes.length) {
       let executed = false;
-  
+
       for (let i = 0; i < queue.length; i++) {
         let process = queue[i];
-  
+
         if (process.arrivalTime <= currentTime && process.state !== "Completed") {
           executed = true;
-  
+
           simulationLogs.push(
             `<li>Process ${process.id} <br />
             Execution Time: ${process.executionTime} <br />
@@ -175,11 +177,11 @@ const App = () => {
             IR: Executing Process ${process.id} <br />
             PC: ${currentTime}</li>`
           );
-  
+
           let executeTime = Math.min(process.remainingTime, quantum);
           process.remainingTime -= executeTime;
           currentTime += executeTime;
-  
+
           if (process.remainingTime > 0) {
             process.state = "Ready";
             simulationLogs.push(
@@ -200,13 +202,13 @@ const App = () => {
           }
         }
       }
-  
+
       // If no process was executed, increment the clock time
       if (!executed) {
         currentTime++;
       }
     }
-  
+
     setLogs(simulationLogs);
   };
 
@@ -229,9 +231,26 @@ const App = () => {
             label="Number of Processes"
             type="number"
             value={numProcesses}
-            onChange={(e) => setNumProcesses(e.target.value)}
-            helperText="Max 5 processes"
+            onChange={(e) => {
+              setNumProcesses(e.target.value)
+              if (0 < e.target.value && e.target.value < 6) {
+                setProessNumberValidate(false)
+              } else {
+                setProessNumberValidate(true)
+              }
+            }}
+            error={processNumberValidate ? true : false}
+            helperText={processNumberValidate ? 'Minimum of 1 and Maximum of 5 processes allowed' : ''}
             fullWidth
+            sx={{
+              "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                display: "none",
+              },
+              "& input[type=number]": {
+                MozAppearance: "textfield",
+              },
+            }}
+            required
           />
         </Grid>
         <Grid item xs={6}>
@@ -239,14 +258,31 @@ const App = () => {
             label="Quantum Size"
             type="number"
             value={quantumSize}
-            onChange={(e) => setQuantumSize(e.target.value)}
-            helperText="Max 3"
+            onChange={(e) => {
+              setQuantumSize(e.target.value)
+              if (0 < e.target.value && e.target.value < 4) {
+                setQuantumSizeValidate(false)
+              } else {
+                setQuantumSizeValidate(true)
+              }
+            }}
+            helperText={quantumSizeValidate ? 'Minimum of 1 and Maximum of 3 quantums allowed for process' : ''}
+            error={quantumSizeValidate ? true : false}
             fullWidth
+            sx={{
+              "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                display: "none",
+              },
+              "& input[type=number]": {
+                MozAppearance: "textfield",
+              },
+            }}
+            required
           />
         </Grid>
         <Grid item xs={12}>
-          <Button variant="contained" color="primary" onClick={handleAddProcess}>
-            Add Process
+          <Button variant="contained" color="primary" onClick={handleAddProcess} disabled={!numProcesses || !quantumSize ? true : false}>
+            Add Process Details
           </Button>
         </Grid>
       </Grid>
