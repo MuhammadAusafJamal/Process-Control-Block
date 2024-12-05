@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { Box, TextField, Button, Typography, Grid, List, ListItem, ListItemText, Paper } from "@mui/material";
 import Swal from "sweetalert2";
 
@@ -61,6 +61,74 @@ const App = () => {
     });
   };
 
+  // const handleStartSimulation = () => {
+  //   if (!numProcesses || !quantumSize) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: "Please provide valid inputs for number of processes and quantum size.",
+  //     });
+  //     return;
+  //   }
+
+  //   const quantum = parseInt(quantumSize);
+  //   if (quantum < 1 || quantum > 3) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: "Quantum size must be between 1 and 3.",
+  //     });
+  //     return;
+  //   }
+
+  //   let queue = [...processes];
+  //   let currentTime = 0;
+  //   let simulationLogs = [];
+
+  //   while (queue.length > 0) {
+  //     let process = queue.shift();
+
+  //     if (process.state === "Completed") continue;
+
+  //     simulationLogs.push(
+  //       `<li>Process ${process.id} <br />
+  //       Execution Time: ${process.executionTime} <br />
+  //       Arrival Time: ${process.arrivalTime} <br />
+  //       Quantum Size: ${process.quantumSize} <br />
+  //       Status: Running <br />
+  //       Remaining Time: ${process.remainingTime} <br />
+  //       Clock Time: ${currentTime} <br />
+  //       IR: Executing Process ${process.id} <br />
+  //       PC: ${currentTime}</li>`
+  //     );
+
+  //     let executeTime = Math.min(process.remainingTime, quantum);
+  //     process.remainingTime -= executeTime;
+  //     currentTime += executeTime;
+
+  //     if (process.remainingTime > 0) {
+  //       process.state = "Ready";
+  //       queue.push(process);
+  //       simulationLogs.push(
+  //         `<li>Remaining Time: ${process.remainingTime} <br />
+  //         Clock Time: ${currentTime} <br />
+  //         Status: Ready <br />
+  //         Resume Instruction: Resume from instruction ${currentTime}</li>`
+  //       );
+  //     } else {
+  //       process.state = "Completed";
+  //       simulationLogs.push(
+  //         `<li>Remaining Time: 0 <br />
+  //         Clock Time: ${currentTime} <br />
+  //         Status: Completed <br />
+  //         Process ${process.id} completed at time ${currentTime}.</li>`
+  //       );
+  //     }
+  //   }
+
+  //   setLogs(simulationLogs);
+  // };
+
   const handleStartSimulation = () => {
     if (!numProcesses || !quantumSize) {
       Swal.fire({
@@ -70,7 +138,7 @@ const App = () => {
       });
       return;
     }
-
+  
     const quantum = parseInt(quantumSize);
     if (quantum < 1 || quantum > 3) {
       Swal.fire({
@@ -80,52 +148,65 @@ const App = () => {
       });
       return;
     }
-
-    let queue = [...processes];
+  
+    // Sort the processes by arrival time before simulation starts
+    let queue = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
     let currentTime = 0;
     let simulationLogs = [];
-
-    while (queue.length > 0) {
-      let process = queue.shift();
-
-      if (process.state === "Completed") continue;
-
-      simulationLogs.push(
-        `<li>Process ${process.id} <br />
-        Execution Time: ${process.executionTime} <br />
-        Arrival Time: ${process.arrivalTime} <br />
-        Quantum Size: ${process.quantumSize} <br />
-        Status: Running <br />
-        Remaining Time: ${process.remainingTime} <br />
-        Clock Time: ${currentTime} <br />
-        IR: Executing Process ${process.id} <br />
-        PC: ${currentTime}</li>`
-      );
-
-      let executeTime = Math.min(process.remainingTime, quantum);
-      process.remainingTime -= executeTime;
-      currentTime += executeTime;
-
-      if (process.remainingTime > 0) {
-        process.state = "Ready";
-        queue.push(process);
-        simulationLogs.push(
-          `<li>Remaining Time: ${process.remainingTime} <br />
-          Clock Time: ${currentTime} <br />
-          Status: Ready <br />
-          Resume Instruction: Resume from instruction ${currentTime}</li>`
-        );
-      } else {
-        process.state = "Completed";
-        simulationLogs.push(
-          `<li>Remaining Time: 0 <br />
-          Clock Time: ${currentTime} <br />
-          Status: Completed <br />
-          Process ${process.id} completed at time ${currentTime}.</li>`
-        );
+    let completedProcesses = 0;
+  
+    while (completedProcesses < processes.length) {
+      let executed = false;
+  
+      for (let i = 0; i < queue.length; i++) {
+        let process = queue[i];
+  
+        if (process.arrivalTime <= currentTime && process.state !== "Completed") {
+          executed = true;
+  
+          simulationLogs.push(
+            `<li>Process ${process.id} <br />
+            Execution Time: ${process.executionTime} <br />
+            Arrival Time: ${process.arrivalTime} <br />
+            Quantum Size: ${process.quantumSize} <br />
+            Status: Running <br />
+            Remaining Time: ${process.remainingTime} <br />
+            Clock Time: ${currentTime} <br />
+            IR: Executing Process ${process.id} <br />
+            PC: ${currentTime}</li>`
+          );
+  
+          let executeTime = Math.min(process.remainingTime, quantum);
+          process.remainingTime -= executeTime;
+          currentTime += executeTime;
+  
+          if (process.remainingTime > 0) {
+            process.state = "Ready";
+            simulationLogs.push(
+              `<li>Remaining Time: ${process.remainingTime} <br />
+              Clock Time: ${currentTime} <br />
+              Status: Ready <br />
+              Resume Instruction: Resume from instruction ${currentTime}</li>`
+            );
+          } else {
+            process.state = "Completed";
+            completedProcesses++;
+            simulationLogs.push(
+              `<li>Remaining Time: 0 <br />
+              Clock Time: ${currentTime} <br />
+              Status: Completed <br />
+              Process ${process.id} completed at time ${currentTime}.</li>`
+            );
+          }
+        }
+      }
+  
+      // If no process was executed, increment the clock time
+      if (!executed) {
+        currentTime++;
       }
     }
-
+  
     setLogs(simulationLogs);
   };
 
