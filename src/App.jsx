@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, TextField, Button, Typography, Grid, List, ListItem, ListItemText, Paper } from "@mui/material";
+  import { Box, TextField, Button, Typography, Grid, List, ListItem, ListItemText, Paper } from "@mui/material";
 import Swal from "sweetalert2";
 
 const App = () => {
@@ -222,7 +222,7 @@ const App = () => {
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Process Control Block Using Roung Robin Scheduler
+        Process Control Block Using Round Robin Scheduler
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
